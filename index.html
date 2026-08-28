@@ -7,51 +7,168 @@
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#fff;color:#111;font-family:Arial,"Noto Sans KR",sans-serif}
-main{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:14vh 20px 60px}
-h1{font-size:clamp(28px,5vw,52px);font-weight:700;text-align:center;margin:0 0 70px;letter-spacing:-2px}
-form{width:min(520px,100%);display:flex;flex-direction:column;gap:18px}
-input{width:100%;height:58px;border:1px solid #bbb;border-radius:0;padding:0 16px;font-size:18px;outline:none}
-input:focus{border-color:#111}
-button{height:52px;border:1px solid #111;background:#111;color:#fff;font-size:16px;cursor:pointer;margin-top:12px}
-button:hover{background:#333}
-#results{display:none;width:min(760px,100%)}
-.back{background:#fff;color:#111;border:1px solid #111;margin-bottom:40px}
-.entry{padding:16px 0;border-bottom:1px solid #eee;font-size:17px}
-.rank{margin-top:70px;border-top:1px solid #111;padding-top:28px}
-.rank h2{font-size:24px;margin:0 0 25px}
-.rank-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee}
-.empty{color:#777;text-align:center;padding:40px 0}
-.error{color:#d00;text-align:center;margin-top:15px}
+
+body{
+  margin:0;
+  background:#fff;
+  color:#111;
+  font-family:Arial,"Noto Sans KR",sans-serif
+}
+
+main{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:14vh 20px 60px
+}
+
+h1{
+  font-size:clamp(28px,5vw,52px);
+  font-weight:700;
+  text-align:center;
+  margin:0 0 70px;
+  letter-spacing:-2px
+}
+
+form{
+  width:min(520px,100%);
+  display:flex;
+  flex-direction:column;
+  gap:18px
+}
+
+input{
+  width:100%;
+  height:58px;
+  border:1px solid #bbb;
+  border-radius:0;
+  padding:0 16px;
+  font-size:18px;
+  outline:none
+}
+
+input:focus{
+  border-color:#111
+}
+
+button{
+  height:52px;
+  border:1px solid #111;
+  background:#111;
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
+  margin-top:12px
+}
+
+button:hover{
+  background:#333
+}
+
+#results{
+  display:none;
+  width:min(760px,100%)
+}
+
+.back{
+  background:#fff;
+  color:#111;
+  border:1px solid #111;
+  margin-bottom:40px
+}
+
+.entry{
+  padding:16px 0;
+  border-bottom:1px solid #eee;
+  font-size:17px
+}
+
+.rank{
+  margin-top:70px;
+  border-top:1px solid #111;
+  padding-top:28px
+}
+
+.rank h2{
+  font-size:24px;
+  margin:0 0 25px
+}
+
+.rank-row{
+  display:flex;
+  justify-content:space-between;
+  padding:12px 0;
+  border-bottom:1px solid #eee
+}
+
+.empty{
+  color:#777;
+  text-align:center;
+  padding:40px 0
+}
+
+#message{
+  margin-top:25px;
+  font-size:17px;
+  text-align:center
+}
 </style>
 </head>
 
 <body>
 
 <main id="home">
+
 <h1>우주먼지를 세 단어로 표현하세요</h1>
 
 <form id="form">
-<input maxlength="30" placeholder="첫 번째 단어" required>
-<input maxlength="30" placeholder="두 번째 단어" required>
-<input maxlength="30" placeholder="세 번째 단어" required>
+
+<input
+  maxlength="30"
+  placeholder="첫 번째 단어"
+  required
+>
+
+<input
+  maxlength="30"
+  placeholder="두 번째 단어"
+  required
+>
+
+<input
+  maxlength="30"
+  placeholder="세 번째 단어"
+  required
+>
+
 <button type="submit">완료</button>
-<div id="error" class="error"></div>
+
 </form>
+
+<div id="message"></div>
+
 </main>
 
 
 <main id="results">
+
 <h1>방문자들의 응답</h1>
 
 <div id="list"></div>
 
 <div class="rank">
+
 <h2>가장 많이 입력된 단어</h2>
+
 <div id="ranking"></div>
+
 </div>
 
-<button class="back" onclick="showHome()">다시 입력하기</button>
+<button class="back" onclick="showHome()">
+다시 입력하기
+</button>
+
 </main>
 
 
@@ -60,70 +177,75 @@ button:hover{background:#333}
 
 <script>
 
-// ===============================
-// Supabase 설정
-// ===============================
+const SUPABASE_URL =
+  "https://vbgzxubcvjirthxlgisv.supabase.co";
 
-const SUPABASE_URL = "https://vbgzxubcvjirthxlgisv.supabase.co";
+const SUPABASE_ANON_KEY =
+  "sb_publishable_rLQK39RxI8l86poRPl9bNg_QbOoA7Hs";
 
-const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
 
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
 
+/* 응답 저장 */
 
-// ===============================
-// 응답 제출
-// ===============================
-
-document.getElementById("form").addEventListener("submit", async (e) => {
+document
+.getElementById("form")
+.addEventListener("submit", async function(e){
 
   e.preventDefault();
 
-  const inputs = [...e.target.querySelectorAll("input")];
+  const inputs =
+    [...e.target.querySelectorAll("input")];
 
-  const words = inputs
-    .map(x => x.value.trim())
-    .filter(Boolean);
+  const words =
+    inputs.map(x => x.value.trim());
 
-  const errorBox = document.getElementById("error");
-  errorBox.textContent = "";
+  const message =
+    document.getElementById("message");
 
-  if (words.length !== 3) {
-    errorBox.textContent = "세 단어를 모두 입력해주세요.";
-    return;
-  }
+  message.textContent = "저장 중...";
 
-  const { error } = await supabaseClient
-    .from("responses")
-    .insert({
-      word1: words[0],
-      word2: words[1],
-      word3: words[2]
-    });
+  const { error } =
+    await supabaseClient
+      .from("responses")
+      .insert({
+        word1: words[0],
+        word2: words[1],
+        word3: words[2]
+      });
 
-  if (error) {
+  if(error){
+
     console.error(error);
-    errorBox.textContent = "저장에 실패했어요. 잠시 후 다시 시도해주세요.";
+
+    message.textContent =
+      "저장에 실패했어요. 잠시 후 다시 시도해주세요.";
+
     return;
   }
+
+  message.textContent = "";
 
   e.target.reset();
 
-  showResults();
+  await showResults();
+
 });
 
 
-// ===============================
-// 결과 화면
-// ===============================
+/* 결과 화면 */
 
 async function showResults(){
 
-  document.getElementById("home").style.display = "none";
-  document.getElementById("results").style.display = "flex";
+  document.getElementById("home").style.display =
+    "none";
+
+  document.getElementById("results").style.display =
+    "flex";
 
   await render();
 
@@ -131,55 +253,62 @@ async function showResults(){
 }
 
 
-// ===============================
-// 입력 화면
-// ===============================
+/* 다시 입력 */
 
 function showHome(){
 
-  document.getElementById("results").style.display = "none";
-  document.getElementById("home").style.display = "flex";
+  document.getElementById("results").style.display =
+    "none";
 
+  document.getElementById("home").style.display =
+    "flex";
 }
 
 
-// ===============================
-// DB에서 응답 가져오기
-// ===============================
+/* 응답 불러오기 */
 
 async function render(){
 
-  const { data, error } = await supabaseClient
-    .from("responses")
-    .select("word1, word2, word3, created_at")
-    .order("created_at", { ascending: true });
+  const list =
+    document.getElementById("list");
 
-  const list = document.getElementById("list");
-  const ranking = document.getElementById("ranking");
+  list.innerHTML =
+    '<div class="empty">불러오는 중...</div>';
 
-  if (error) {
+  const { data, error } =
+    await supabaseClient
+      .from("responses")
+      .select("word1,word2,word3,created_at")
+      .order("created_at", {
+        ascending:false
+      });
+
+  if(error){
 
     console.error(error);
 
     list.innerHTML =
-      '<div class="empty">응답을 불러오지 못했습니다.</div>';
+      '<div class="empty">응답을 불러오지 못했어요.</div>';
 
-    ranking.innerHTML = "";
+    return;
+  }
+
+  if(!data || data.length === 0){
+
+    list.innerHTML =
+      '<div class="empty">아직 응답이 없습니다.</div>';
+
+    document.getElementById("ranking").innerHTML =
+      '<div class="empty">아직 집계할 단어가 없습니다.</div>';
 
     return;
   }
 
 
-  // 응답 목록
+  /* 응답 목록 */
 
-  if (!data || data.length === 0) {
-
-    list.innerHTML =
-      '<div class="empty">아직 응답이 없습니다.</div>';
-
-  } else {
-
-    list.innerHTML = data.map(row => {
+  list.innerHTML =
+    data.map(row => {
 
       return `
         <div class="entry">
@@ -193,71 +322,81 @@ async function render(){
 
     }).join("");
 
-  }
 
-
-  // 단어 집계
+  /* 단어 횟수 */
 
   const counts = {};
 
   data.forEach(row => {
 
-    [row.word1, row.word2, row.word3].forEach(word => {
+    [
+      row.word1,
+      row.word2,
+      row.word3
+    ].forEach(word => {
 
-      if (!word) return;
+      const key =
+        word.trim().toLowerCase();
 
-      const key = word.trim().toLowerCase();
+      if(key){
 
-      counts[key] = (counts[key] || 0) + 1;
+        counts[key] =
+          (counts[key] || 0) + 1;
+
+      }
 
     });
 
   });
 
 
-  const top = Object.entries(counts)
-    .sort((a,b) => b[1] - a[1])
-    .slice(0,3);
+  /* 가장 많이 입력된 단어 TOP 3 */
+
+  const top =
+    Object.entries(counts)
+      .sort((a,b) => b[1] - a[1])
+      .slice(0,3);
 
 
-  if (top.length === 0) {
-
-    ranking.innerHTML =
-      '<div class="empty">아직 집계할 단어가 없습니다.</div>';
-
-  } else {
-
-    ranking.innerHTML = top.map((x,i) => {
+  document.getElementById("ranking").innerHTML =
+    top.map((item,index) => {
 
       return `
         <div class="rank-row">
-          <span>${i + 1}위&nbsp;&nbsp;${escapeHtml(x[0])}</span>
-          <span>${x[1]}회</span>
+          <span>
+            ${index + 1}위&nbsp;&nbsp;
+            ${escapeHtml(item[0])}
+          </span>
+
+          <span>
+            ${item[1]}회
+          </span>
         </div>
       `;
 
     }).join("");
 
-  }
-
 }
 
 
-// ===============================
-// HTML 보안 처리
-// ===============================
+/* HTML 문자 처리 */
 
 function escapeHtml(s){
 
-  return s.replace(
+  return String(s).replace(
     /[&<>"']/g,
-    c => ({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;",
-      "'":"&#039;"
-    }[c])
+
+    function(c){
+
+      return {
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#039;"
+      }[c];
+
+    }
   );
 
 }
@@ -266,4 +405,3 @@ function escapeHtml(s){
 
 </body>
 </html>
-const SUPABASE_ANON_KEY = "sb_publishable_rLQK39RxI8l86poRPl9bNg_QbOoA7Hs";
