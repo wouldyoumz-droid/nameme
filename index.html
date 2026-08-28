@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>우주먼지를 세 단어로 표현하세요</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:#111;font-family:Arial,"Noto Sans KR",sans-serif}
+main{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:14vh 20px 60px}
+h1{font-size:clamp(28px,5vw,52px);font-weight:700;text-align:center;margin:0 0 70px;letter-spacing:-2px}
+form{width:min(520px,100%);display:flex;flex-direction:column;gap:18px}
+input{width:100%;height:58px;border:1px solid #bbb;border-radius:0;padding:0 16px;font-size:18px;outline:none}
+input:focus{border-color:#111}
+button{height:52px;border:1px solid #111;background:#111;color:#fff;font-size:16px;cursor:pointer;margin-top:12px}
+button:hover{background:#333}
+#results{display:none;width:min(760px,100%)}
+.back{background:#fff;color:#111;border:1px solid #111;margin-bottom:40px}
+.entry{padding:16px 0;border-bottom:1px solid #eee;font-size:17px}
+.rank{margin-top:70px;border-top:1px solid #111;padding-top:28px}
+.rank h2{font-size:24px;margin:0 0 25px}
+.rank-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee}
+.empty{color:#777;text-align:center;padding:40px 0}
+</style>
+</head>
+<body>
+<main id="home">
+<h1>우주먼지를 세 단어로 표현하세요</h1>
+<form id="form">
+<input maxlength="30" placeholder="첫 번째 단어" required>
+<input maxlength="30" placeholder="두 번째 단어" required>
+<input maxlength="30" placeholder="세 번째 단어" required>
+<button type="submit">완료</button>
+</form>
+</main>
+
+<main id="results">
+<h1>방문자들의 응답</h1>
+<div id="list"></div>
+<div class="rank">
+<h2>가장 많이 입력된 단어</h2>
+<div id="ranking"></div>
+</div>
+<button class="back" onclick="showHome()">다시 입력하기</button>
+</main>
+
+<script>
+const KEY="spaceDustResponses";
+const getData=()=>JSON.parse(localStorage.getItem(KEY)||"[]");
+const saveData=d=>localStorage.setItem(KEY,JSON.stringify(d));
+
+document.getElementById("form").addEventListener("submit",e=>{
+ e.preventDefault();
+ const words=[...e.target.querySelectorAll("input")].map(x=>x.value.trim()).filter(Boolean);
+ const data=getData();
+ data.push(words);
+ saveData(data);
+ showResults();
+});
+
+function showResults(){
+ document.getElementById("home").style.display="none";
+ document.getElementById("results").style.display="flex";
+ render();
+ window.scrollTo(0,0);
+}
+function showHome(){
+ document.getElementById("results").style.display="none";
+ document.getElementById("home").style.display="flex";
+}
+function render(){
+ const data=getData();
+ const list=document.getElementById("list");
+ list.innerHTML=data.length?data.map(words=>`<div class="entry">${words.map(escapeHtml).join(" · ")}</div>`).join(""):'<div class="empty">아직 응답이 없습니다.</div>';
+ const counts={};
+ data.flat().forEach(w=>{const k=w.toLowerCase();counts[k]=(counts[k]||0)+1});
+ const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,3);
+ document.getElementById("ranking").innerHTML=top.length?top.map((x,i)=>`<div class="rank-row"><span>${i+1}위&nbsp;&nbsp;${escapeHtml(x[0])}</span><span>${x[1]}회</span></div>`).join(""):'<div class="empty">아직 집계할 단어가 없습니다.</div>';
+}
+function escapeHtml(s){
+ return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+</script>
+</body>
+</html>
